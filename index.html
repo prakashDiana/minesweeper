@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minesweeper</title>
+  <style>
+    body {
+      font-family: ui-rounded, system-ui, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 30px;
+    }
+    h1 {
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+    #game {
+      display: inline-block;
+      border: 4px solid #555;
+      background: #ccc;
+      padding: 8px;
+      border-radius: 8px;
+    }
+    .row {
+      display: flex;
+    }
+    .cell {
+      width: 32px;
+      height: 32px;
+      background: #eee;
+      border: 2px solid #999;
+      margin: 2px;
+      text-align: center;
+      vertical-align: middle;
+      line-height: 28px;
+      font-size: 18px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s;
+    }
+    .cell.revealed {
+      background: #ddd;
+      border: 2px solid #bbb;
+      cursor: default;
+    }
+    .cell.mine {
+      background: #ff6666;
+      color: #fff;
+    }
+    .cell.flagged {
+      background: #ffe066;
+      color: #b59f3b;
+    }
+    #status {
+      font-size: 18px;
+      margin: 16px 0;
+    }
+    #restart {
+      margin: 6px 0 10px 0;
+      padding: 6px 18px;
+      font-size: 16px;
+      border-radius: 4px;
+      border: none;
+      background: #2196f3;
+      color: white;
+      cursor: pointer;
+    }
+    #restart:hover {
+      background: #1769aa;
+    }
+  </style>
+</head>
+<body>
+  <h1>Minesweeper</h1>
+  <div id="status"></div>
+  <button id="restart">Restart</button>
+  <div id="game" style="font-weight: bold"></div>
+  <script>
+    // Config
+    const ROWS = 9, COLS = 9, MINES = 10;
+    let board, mineMap, revealed, flagged, gameOver, cellsRevealed;
+
+    function init() {
+      board = [];
+      mineMap = [];
+      revealed = [];
+      flagged = [];
+      gameOver = false;
+      cellsRevealed = 0;
+      // Build board
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = [];
+        mineMap[r] = [];
+        revealed[r] = [];
+        flagged[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          board[r][c] = 0;
+          mineMap[r][c] = false;
+          revealed[r][c] = false;
+          flagged[r][c] = false;
+        }
+      }
+      // Place mines
+      let placed = 0;
+      while (placed < MINES) {
+        let rr = Math.floor(Math.random() * ROWS);
+        let cc = Math.floor(Math.random() * COLS);
+        if (!mineMap[rr][cc]) {
+          mineMap[rr][cc] = true;
+          placed++;
+        }
+      }
+      // Calculate numbers
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (mineMap[r][c]) {
+            board[r][c] = -1; // mine
+            continue;
+          }
+          let count = 0;
+          for (let dr=-1; dr<=1; dr++) {
+            for (let dc=-1; dc<=1; dc++) {
+              if (dr===0 && dc===0) continue;
+              let nr = r+dr, nc = c+dc;
+              if (nr>=0 && nr<ROWS && nc>=0 && nc<COLS && mineMap[nr][nc]) count++;
+            }
+          }
+          board[r][c] = count;
+        }
+      }
+      draw();
+      document.getElementById('status').textContent = '';
+    }
+
+    function draw() {
+      const game = document.getElementById('game');
+      game.innerHTML = '';
+      for (let r = 0; r < ROWS; r++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row';
+        for (let c = 0; c < COLS; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          if (revealed[r][c]) {
+            cell.classList.add('revealed');
+            if (mineMap[r][c]) {
+              cell.classList.add('mine');
+              cell.textContent = '💣';
+            } else if (board[r][c] > 0) {
+              cell.textContent = board[r][c];
+              cell.style.color = getColor(board[r][c]);
+            }
+          } else if (flagged[r][c]) {
+            cell.classList.add('flagged');
+            cell.textContent = '🚩';
+          }
+          cell.oncontextmenu = e => { e.preventDefault(); onCellRight(r, c); };
+          cell.onclick = () => onCellClick(r, c);
+          rowDiv.appendChild(cell);
+        }
+        game.appendChild(rowDiv);
+      }
+    }
+
+    function getColor(num) {
+      const colors = ['#007bff', '#388e3c', '#d32f2f', '#7c21af', '#ff9100', '#0097a7', '#455a64', '#d84315'];
+      return colors[num-1] || '#222';
+    }
+
+    function onCellClick(r, c) {
+      if (gameOver || revealed[r][c] || flagged[r][c]) return;
+      if (mineMap[r][c]) {
+        revealAll();
+        gameOver = true;
+        document.getElementById('status').textContent = 'Failed';
+        return;
+      }
+      revealCell(r, c);
+      draw();
+      if (cellsRevealed === ROWS*COLS - MINES) {
+        revealAll();
+        gameOver = true;
+        document.getElementById('status').textContent = 'Success';
+      }
+    }
+
+    function onCellRight(r, c) {
+      if (gameOver || revealed[r][c]) return;
+      flagged[r][c] = !flagged[r][c];
+      draw();
+    }
+
+    function revealCell(r, c) {
+      if (revealed[r][c] || flagged[r][c]) return;
+      revealed[r][c] = true;
+      cellsRevealed++;
+      if (board[r][c] === 0) {
+        // Reveal adjacent
+        for (let dr=-1; dr<=1; dr++) for (let dc=-1; dc<=1; dc++) {
+          let nr = r+dr, nc = c+dc;
+          if (nr>=0 && nr<ROWS && nc>=0 && nc<COLS) revealCell(nr, nc);
+        }
+      }
+    }
+
+    function revealAll() {
+      for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) revealed[r][c]=true;
+      draw();
+    }
+
+    document.getElementById('restart').onclick = init;
+    window.onload = init;
+  </script>
+</body>
+</html>
