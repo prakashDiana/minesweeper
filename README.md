@@ -5,7 +5,7 @@ SF Pro Rounded falls squarely on the side of **strict licensing**, not "chill" l
 Here's a breakdown of why its licensing is so restrictive:
 
 * **Proprietary Apple Font:** SF Pro Rounded is a proprietary typeface owned by Apple. This means Apple holds the copyright and controls all aspects of its usage and distribution.
-* **Highly Restrictive EULA:** The End User License Agreement (EULA) for these fonts is very specific and limited. It typically permits developers to use the fonts **only for creating mock-ups of user interfaces for software products running on Apple's operating systems** (iOS, macOS, watchOS, tvOS).
+* **Highly Restrictive EULA:** The End User License Agreement (EULA) for these fonts is very specific and limited. It typically permits developers to use the fonts **only for creating mock-ups of user interfaces for software products running on Apple's operating systems** (iOS, iPadOS, macOS, tvOS).
 * **Prohibition on General Use:** The EULA expressly **prohibits** using the font for purposes outside of this narrow scope. This includes:
     * Embedding it as a web font on a general website.
     * Using it in logos, branding, or other marketing materials.
